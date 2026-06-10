@@ -1,274 +1,453 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Send, Star, Smile, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
 
-const LOVE_MESSAGES = [
-  "Kamu adalah alasan aku tersenyum setiap pagi 🌅",
-  "Bersamamu, setiap hari terasa seperti petualangan 🌟",
-  "Kamu bukan hanya kekasihku, tapi juga sahabat terbaikku 💫",
-  "Cintamu adalah rumah yang selalu ingin aku pulang ke sana 🏡",
-  "Di matamu, aku menemukan seluruh duniaku 🌍",
-  "Kamu membuat hidupku lebih berwarna dan bermakna 🌈",
-  "Setiap detik bersamamu adalah hadiah yang paling berharga ⏰",
-  "Kamu adalah melodi terindah dalam hidupku 🎵",
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+type Answers = {
+  partnerName: string;
+  mood: string;
+  memory: string;
+  loveLanguage: string;
+  dreamDate: string;
+  message: string;
+};
+
+// ─── Constants ──────────────────────────────────────────────────────────────
+
+const MOODS = [
+  { id: "happy", label: "Bahagia", desc: "Hari ini terasa sangat baik" },
+  { id: "calm", label: "Tenang", desc: "Damai dan nyaman" },
+  { id: "nostalgic", label: "Rindu", desc: "Memikirkan momen bersama" },
+  { id: "excited", label: "Bersemangat", desc: "Tidak sabar bertemu" },
 ];
 
-const REASONS = [
-  { emoji: "😊", text: "Senyummu yang bikin hatiku meleleh" },
-  { emoji: "🤗", text: "Pelukan hangatmu yang membuatku aman" },
-  { emoji: "🧠", text: "Kecerdasanmu yang selalu menginspirasi" },
-  { emoji: "💪", text: "Kekuatanmu di saat aku lemah" },
-  { emoji: "🎭", text: "Rasa humormu yang selalu bikin tawa" },
-  { emoji: "🌺", text: "Kebaikan hatimu kepada semua orang" },
-  { emoji: "✨", text: "Caramu melihat dunia dengan penuh keajaiban" },
-  { emoji: "🦋", text: "Kupu-kupu di perutku setiap kali melihatmu" },
+const LOVE_LANGUAGES = [
+  { id: "words", label: "Kata-kata afirmasi", desc: "Ucapan yang membuat hari lebih indah" },
+  { id: "touch", label: "Sentuhan fisik", desc: "Pelukan yang membuat aman" },
+  { id: "time", label: "Waktu berkualitas", desc: "Momen berdua yang bermakna" },
+  { id: "acts", label: "Tindakan nyata", desc: "Hal kecil yang menunjukkan kepedulian" },
+  { id: "gifts", label: "Hadiah", desc: "Sesuatu untuk diingat selalu" },
 ];
 
-const WISHES = [
-  "Semoga harimu seindah wajahmu",
-  "Semoga semua impianmu terwujud",
-  "Semoga kebahagiaan selalu menyertaimu",
-  "Semoga kamu selalu sehat dan bahagia",
-  "Semoga cita-citamu tercapai satu per satu",
+const DREAM_DATES = [
+  { id: "dinner", label: "Makan malam romantis", desc: "Restoran dengan cahaya lilin" },
+  { id: "nature", label: "Jalan di alam terbuka", desc: "Pantai, gunung, atau taman sunyi" },
+  { id: "home", label: "Di rumah berdua", desc: "Film, masak bersama, bercerita" },
+  { id: "travel", label: "Perjalanan baru", desc: "Kota atau tempat yang belum pernah dikunjungi" },
+  { id: "surprise", label: "Kejutan darimu", desc: "Apa pun yang kamu pilihkan" },
 ];
 
-function FloatingHeart({ style }: { style: React.CSSProperties }) {
+const MEMORIES = ["Pertama kali bertemu", "Kencan pertama kita", "Saat kamu tersenyum untuk pertamakalinya padaku", "Perjalanan yang kita lakukan bersama", "Momen sederhana yang terasa sempurna"];
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function generateLetter(answers: Answers): string {
+  const moodMap: Record<string, string> = {
+    happy: "kebahagiaanmu hari ini membuat aku ikut merasakan hangatnya",
+    calm: "ketenanganmu selalu menjadi tempatku berlabuh",
+    nostalgic: "rindu itu pertanda betapa berartinya kamu bagiku",
+    excited: "semangatmu selalu menular dan membuat hari terasa lebih hidup",
+  };
+
+  const llMap: Record<string, string> = {
+    words: "aku akan selalu punya kata-kata untukmu — setiap hari, tanpa bosan",
+    touch: "pelukanku selalu untukmu, kapan pun kamu membutuhkannya",
+    time: "waktuku yang paling berharga ingin aku habiskan bersamamu",
+    acts: "hal-hal kecil yang kulakukan adalah caraku berkata 'aku peduli'",
+    gifts: "setiap hal yang aku berikan membawa sepotong hatiku",
+  };
+
+  const dateMap: Record<string, string> = {
+    dinner: "makan malam berdua dengan cahaya yang lembut",
+    nature: "berjalan di tempat yang tenang, hanya kita berdua",
+    home: "sore yang hangat di rumah, tanpa agenda apa pun",
+    travel: "petualangan ke tempat yang belum pernah kita datangi",
+    surprise: "sesuatu yang kamu pilihkan untukku — yang pasti istimewa",
+  };
+
+  return `${answers.partnerName},
+
+Aku ingin kamu tahu bahwa ${moodMap[answers.mood] || "kamu selalu ada di pikiranku"}.
+
+Di antara semua momen yang kita lewati, yang paling sering aku kenang adalah — ${answers.memory.toLowerCase()}. Momen itu sederhana, tapi entah kenapa selalu kembali, selalu hangat.
+
+Kamu mengajarkanku bahwa ${llMap[answers.loveLanguage] || "cinta bisa hadir dalam banyak bentuk"}. Dan aku bersyukur bisa belajar itu darimu.
+
+Kalau boleh aku pilih satu waktu bersamamu sekarang, aku ingin ${dateMap[answers.dreamDate] || "waktu berdua bersamamu"}.
+
+${answers.message ? `Satu lagi yang ingin aku sampaikan: ${answers.message}` : ""}
+
+Terima kasih sudah ada.
+
+— Untukmu, selalu`;
+}
+
+// ─── Page Components ─────────────────────────────────────────────────────────
+
+function PageShell({ children, step, total }: { children: React.ReactNode; step: number; total: number }) {
   return (
-    <div className="absolute pointer-events-none select-none" style={{ fontSize: "1.5rem", opacity: 0.35, ...style }}>
-      💕
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+      <div className="progress-bar">
+        <div className="progress-fill" style={{ width: `${(step / total) * 100}%` }} />
+      </div>
+      <div
+        className="page-enter"
+        style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "2rem",
+          overflowY: "auto",
+        }}
+      >
+        <div style={{ maxWidth: 560, width: "100%" }}>{children}</div>
+      </div>
+      <div style={{ padding: "1rem 2rem", textAlign: "right" }}>
+        <span className="eyebrow">
+          {step} / {total}
+        </span>
+      </div>
     </div>
   );
 }
 
-function Section({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) setVisible(true); }, { threshold: 0.1 });
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
+// Page 0 — Intro
+function PageIntro({ onNext }: { onNext: () => void }) {
   return (
-    <div ref={ref} style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(40px)", transition: `opacity 0.8s ease ${delay}s, transform 0.8s ease ${delay}s` }}>
-      {children}
-    </div>
+    <PageShell step={0} total={7}>
+      <div>
+        <p className="eyebrow stagger-1">Sebuah perjalanan kecil</p>
+        <h1 className="display stagger-2" style={{ marginTop: "1rem" }}>
+          Untuk kamu
+          <br />
+          yang berarti
+        </h1>
+        <p className="body-text stagger-3" style={{ marginTop: "1.5rem", maxWidth: 400 }}>
+          Jawab beberapa pertanyaan, dan di akhir kamu akan mendapat sesuatu yang dibuat khusus untukmu.
+        </p>
+        <p className="body-text stagger-4" style={{ marginTop: "0.5rem" }}>
+          Tidak perlu terburu-buru.
+        </p>
+        <div className="stagger-5" style={{ marginTop: "2.5rem" }}>
+          <button className="btn-primary" onClick={onNext}>
+            Mulai &rarr;
+          </button>
+        </div>
+      </div>
+    </PageShell>
   );
 }
 
-export default function Home() {
-  const [msgIndex, setMsgIndex] = useState(0);
-  const [note, setNote] = useState("");
-  const [sentNote, setSentNote] = useState("");
-  const [wish, setWish] = useState("");
-  const [clickCount, setClickCount] = useState(0);
-  const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number; y: number }[]>([]);
-  const [showBurst, setShowBurst] = useState(false);
+// Page 1 — Partner name
+function PageName({ onNext, answers, setAnswers }: { onNext: () => void; answers: Answers; setAnswers: (a: Answers) => void }) {
+  return (
+    <PageShell step={1} total={7}>
+      <div>
+        <p className="eyebrow stagger-1">Pertanyaan pertama</p>
+        <h2 className="display stagger-2" style={{ marginTop: "1rem", fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>
+          Siapa nama pasanganmu?
+        </h2>
+        <p className="body-text stagger-3" style={{ marginTop: "1rem" }}>
+          Nama yang akan muncul di pesan akhir nanti.
+        </p>
+        <div className="stagger-4" style={{ marginTop: "2rem" }}>
+          <input
+            type="text"
+            placeholder="Nama pasanganmu"
+            value={answers.partnerName}
+            onChange={(e) => setAnswers({ ...answers, partnerName: e.target.value })}
+            onKeyDown={(e) => e.key === "Enter" && answers.partnerName.trim() && onNext()}
+            autoFocus
+          />
+        </div>
+        <div className="stagger-5" style={{ marginTop: "1.5rem" }}>
+          <button className="btn-primary" onClick={onNext} style={{ opacity: answers.partnerName.trim() ? 1 : 0.4, cursor: answers.partnerName.trim() ? "pointer" : "not-allowed" }} disabled={!answers.partnerName.trim()}>
+            Lanjut &rarr;
+          </button>
+        </div>
+      </div>
+    </PageShell>
+  );
+}
 
-  useEffect(() => {
-    const interval = setInterval(() => setMsgIndex((i) => (i + 1) % LOVE_MESSAGES.length), 4000);
-    return () => clearInterval(interval);
-  }, []);
+// Page 2 — Mood
+function PageMood({ onNext, answers, setAnswers }: { onNext: () => void; answers: Answers; setAnswers: (a: Answers) => void }) {
+  return (
+    <PageShell step={2} total={7}>
+      <div>
+        <p className="eyebrow stagger-1">Tentang perasaanmu</p>
+        <h2 className="display stagger-2" style={{ marginTop: "1rem", fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>
+          Bagaimana suasana hatimu sekarang?
+        </h2>
+        <div className="stagger-3" style={{ display: "grid", gap: "0.75rem", marginTop: "2rem" }}>
+          {MOODS.map((m) => (
+            <div
+              key={m.id}
+              className={`choice-card ${answers.mood === m.id ? "selected" : ""}`}
+              onClick={() => {
+                setAnswers({ ...answers, mood: m.id });
+                setTimeout(onNext, 300);
+              }}
+            >
+              <div style={{ fontWeight: 400, fontSize: "1rem" }}>{m.label}</div>
+              <div className="body-text" style={{ marginTop: "0.2rem", fontSize: "0.85rem" }}>
+                {m.desc}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </PageShell>
+  );
+}
 
-  const handleHeartClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const newHeart = { id: Date.now(), x: e.clientX - rect.left, y: e.clientY - rect.top };
-    setFloatingHearts((h) => [...h, newHeart]);
-    setClickCount((c) => {
-      const next = c + 1;
-      if (next % 10 === 0) { setShowBurst(true); setTimeout(() => setShowBurst(false), 1500); }
-      return next;
-    });
-    setTimeout(() => setFloatingHearts((h) => h.filter((x) => x.id !== newHeart.id)), 1000);
+// Page 3 — Memory
+function PageMemory({ onNext, answers, setAnswers }: { onNext: () => void; answers: Answers; setAnswers: (a: Answers) => void }) {
+  const [custom, setCustom] = useState("");
+  const [useCustom, setUseCustom] = useState(false);
+
+  const handleSelect = (mem: string) => {
+    setAnswers({ ...answers, memory: mem });
+    setTimeout(onNext, 300);
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: "linear-gradient(135deg, #FFF0F3 0%, #FFE4EC 50%, #FFF0F3 100%)" }}>
-
-      {/* Background floating hearts */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {[...Array(8)].map((_, i) => (
-          <FloatingHeart key={i} style={{ left: `${8 + i * 11}%`, top: `${15 + (i % 3) * 25}%`, animationDelay: `${i * 0.5}s` }} />
-        ))}
-      </div>
-
-      {/* HERO */}
-      <section style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", textAlign: "center", position: "relative" }}>
-
-        {/* Big clickable heart */}
-        <div
-          onClick={handleHeartClick}
-          style={{ fontSize: "5rem", cursor: "pointer", position: "relative", userSelect: "none" }}
-        >
-          <span className="heartbeat" style={{ display: "inline-block" }}>
-            {showBurst ? "💥" : "💖"}
-          </span>
-          {floatingHearts.map((h) => (
-            <span key={h.id} style={{ position: "absolute", left: h.x, top: h.y, fontSize: "1.5rem", animation: "fadeUp 1s ease forwards", pointerEvents: "none", zIndex: 10 }}>
-              💕
-            </span>
-          ))}
-        </div>
-
-        <h1 className="shimmer-text" style={{ fontSize: "clamp(2.5rem, 6vw, 5rem)", fontWeight: 700, marginTop: "1.5rem", lineHeight: 1.1, letterSpacing: "-0.02em" }}>
-          Untuk Kamu,<br />Sayangku
-        </h1>
-
-        <p style={{ marginTop: "1.5rem", fontSize: "1.2rem", color: "var(--text-muted)", maxWidth: 480, lineHeight: 1.7 }}>
-          Setiap hari bersamamu adalah hadiah terbesar dalam hidupku
-        </p>
-
-        <div style={{ marginTop: "2rem", padding: "1.25rem 2rem", background: "white", borderRadius: 20, boxShadow: "0 4px 30px rgba(255,77,109,0.15)", maxWidth: 480, width: "100%", minHeight: 80, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.5s ease" }}>
-          <p style={{ color: "var(--rose-dark)", fontStyle: "italic", fontSize: "1.05rem", lineHeight: 1.6 }}>
-            &ldquo;{LOVE_MESSAGES[msgIndex]}&rdquo;
-          </p>
-        </div>
-
-        <p style={{ marginTop: "1rem", fontSize: "0.85rem", color: "var(--text-muted)", fontFamily: "sans-serif" }}>
-          💝 Klik hati di atas {clickCount > 0 ? `(${clickCount}×)` : "— coba klik!"}
-        </p>
-
-        <div style={{ marginTop: "3rem" }}>
-          <div style={{ width: 2, height: 60, background: "linear-gradient(to bottom, var(--rose), transparent)", margin: "0 auto", borderRadius: 4 }} />
-          <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.5rem", fontFamily: "sans-serif" }}>scroll untuk kejutan lainnya</p>
-        </div>
-      </section>
-
-      {/* ALASAN MENCINTAIMU */}
-      <section style={{ padding: "5rem 2rem", maxWidth: 900, margin: "0 auto" }}>
-        <Section>
-          <div style={{ textAlign: "center", marginBottom: "3rem" }}>
-            <span style={{ color: "var(--rose)", fontSize: "0.85rem", letterSpacing: 3, textTransform: "uppercase", fontFamily: "sans-serif" }}>Alasan aku</span>
-            <h2 style={{ fontSize: "clamp(2rem, 4vw, 3rem)", marginTop: "0.5rem" }}>Mengapa Aku Mencintaimu</h2>
-          </div>
-        </Section>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "1rem" }}>
-          {REASONS.map((r, i) => (
-            <Section key={i} delay={i * 0.08}>
-              <div
-                style={{ background: "white", borderRadius: 16, padding: "1.5rem", textAlign: "center", boxShadow: "0 2px 20px rgba(255,77,109,0.08)", border: "1px solid rgba(255,77,109,0.1)", transition: "transform 0.2s, box-shadow 0.2s", cursor: "default" }}
-                onMouseEnter={(e) => { const el = e.currentTarget as HTMLDivElement; el.style.transform = "translateY(-5px)"; el.style.boxShadow = "0 10px 30px rgba(255,77,109,0.2)"; }}
-                onMouseLeave={(e) => { const el = e.currentTarget as HTMLDivElement; el.style.transform = "translateY(0)"; el.style.boxShadow = "0 2px 20px rgba(255,77,109,0.08)"; }}
-              >
-                <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>{r.emoji}</div>
-                <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", lineHeight: 1.5, fontFamily: "sans-serif" }}>{r.text}</p>
-              </div>
-            </Section>
-          ))}
-        </div>
-      </section>
-
-      {/* KIRIM PESAN */}
-      <section style={{ padding: "5rem 2rem", background: "rgba(255,77,109,0.03)" }}>
-        <Section>
-          <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
-            <span style={{ fontSize: "2rem" }}>💌</span>
-            <h2 style={{ fontSize: "clamp(1.8rem, 3vw, 2.5rem)", margin: "0.75rem 0" }}>Kirim Pesan Cinta</h2>
-            <p style={{ color: "var(--text-muted)", marginBottom: "2rem", fontFamily: "sans-serif" }}>Tuliskan kata-kata manismu</p>
-
-            {sentNote ? (
-              <div style={{ background: "white", borderRadius: 20, padding: "2rem", boxShadow: "0 4px 30px rgba(255,77,109,0.12)", border: "1px solid rgba(255,77,109,0.15)", animation: "fadeUp 0.5s ease" }}>
-                <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>💌</div>
-                <p style={{ fontStyle: "italic", color: "var(--text)", lineHeight: 1.7, fontSize: "1.05rem" }}>&ldquo;{sentNote}&rdquo;</p>
-                <div style={{ marginTop: "1.5rem", borderTop: "1px solid rgba(255,77,109,0.1)", paddingTop: "1rem" }}>
-                  <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontFamily: "sans-serif" }}>— Dikirim dengan cinta 💕</p>
-                </div>
-                <button onClick={() => setSentNote("")} style={{ marginTop: "1rem", padding: "0.5rem 1.5rem", border: "1px solid var(--rose-light)", borderRadius: 50, background: "transparent", color: "var(--rose)", cursor: "pointer", fontFamily: "sans-serif" }}>
-                  Kirim lagi ✏️
-                </button>
-              </div>
-            ) : (
-              <div>
-                <textarea
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="Tuliskan perasaanmu di sini... ✍️"
-                  rows={5}
-                  style={{ width: "100%", padding: "1.25rem", borderRadius: 16, border: "1.5px solid rgba(255,77,109,0.2)", background: "white", fontSize: "1rem", fontFamily: "Georgia, serif", color: "var(--text)", resize: "none", outline: "none", lineHeight: 1.7, transition: "border-color 0.2s", display: "block" }}
-                  onFocus={(e) => (e.target.style.borderColor = "var(--rose)")}
-                  onBlur={(e) => (e.target.style.borderColor = "rgba(255,77,109,0.2)")}
-                />
-                <button
-                  onClick={() => { if (note.trim()) { setSentNote(note); setNote(""); } }}
-                  style={{ marginTop: "1rem", padding: "0.875rem 2.5rem", background: note.trim() ? "var(--rose)" : "var(--rose-light)", color: "white", border: "none", borderRadius: 50, fontSize: "1rem", cursor: note.trim() ? "pointer" : "not-allowed", fontFamily: "sans-serif", display: "inline-flex", alignItems: "center", gap: "0.5rem", transition: "transform 0.2s" }}
-                  onMouseEnter={(e) => note.trim() && ((e.currentTarget as HTMLButtonElement).style.transform = "scale(1.05)")}
-                  onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.transform = "scale(1)")}
-                >
-                  <Send size={18} />
-                  Kirim Pesan Cinta
-                </button>
-              </div>
-            )}
-          </div>
-        </Section>
-      </section>
-
-      {/* DOA */}
-      <section style={{ padding: "5rem 2rem", maxWidth: 700, margin: "0 auto", textAlign: "center" }}>
-        <Section>
-          <Star size={32} color="var(--gold)" style={{ margin: "0 auto 1rem" }} />
-          <h2 style={{ fontSize: "clamp(1.8rem, 3vw, 2.5rem)", marginBottom: "0.75rem" }}>Doa Untukmu</h2>
-          <p style={{ color: "var(--text-muted)", marginBottom: "2rem", fontFamily: "sans-serif" }}>Dapatkan doa spesial untuk harimu</p>
-          {wish && (
-            <div style={{ background: "linear-gradient(135deg, #FFF0F3, #FFE4EC)", borderRadius: 20, padding: "2rem", marginBottom: "1.5rem", border: "1px solid rgba(255,77,109,0.15)", animation: "fadeUp 0.5s ease" }}>
-              <p style={{ fontSize: "1.2rem", color: "var(--rose-dark)", fontStyle: "italic", lineHeight: 1.7 }}>✨ {wish} ✨</p>
+    <PageShell step={3} total={7}>
+      <div>
+        <p className="eyebrow stagger-1">Kenangan</p>
+        <h2 className="display stagger-2" style={{ marginTop: "1rem", fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>
+          Momen apa yang paling sering kamu kenang?
+        </h2>
+        <div className="stagger-3" style={{ display: "grid", gap: "0.6rem", marginTop: "2rem" }}>
+          {MEMORIES.map((m) => (
+            <div
+              key={m}
+              className={`choice-card ${answers.memory === m && !useCustom ? "selected" : ""}`}
+              onClick={() => {
+                setUseCustom(false);
+                handleSelect(m);
+              }}
+            >
+              <div style={{ fontSize: "0.95rem" }}>{m}</div>
             </div>
-          )}
-          <button
-            onClick={() => setWish(WISHES[Math.floor(Math.random() * WISHES.length)])}
-            style={{ padding: "0.875rem 2.5rem", background: "white", color: "var(--rose-dark)", border: "1.5px solid var(--rose-light)", borderRadius: 50, fontSize: "1rem", cursor: "pointer", fontFamily: "sans-serif", display: "inline-flex", alignItems: "center", gap: "0.5rem", transition: "all 0.2s" }}
-            onMouseEnter={(e) => { const el = e.currentTarget as HTMLButtonElement; el.style.background = "var(--rose)"; el.style.color = "white"; }}
-            onMouseLeave={(e) => { const el = e.currentTarget as HTMLButtonElement; el.style.background = "white"; el.style.color = "var(--rose-dark)"; }}
-          >
-            <Smile size={18} />
-            {wish ? "Doa Lainnya" : "Dapatkan Doa"}
-          </button>
-        </Section>
-      </section>
-
-      {/* LOVE METER */}
-      <section style={{ padding: "5rem 2rem", background: "rgba(255,77,109,0.03)" }}>
-        <Section>
-          <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
-            <h2 style={{ fontSize: "clamp(1.8rem, 3vw, 2.5rem)", marginBottom: "0.75rem" }}>Ukuran Cintaku</h2>
-            <p style={{ color: "var(--text-muted)", marginBottom: "3rem", fontFamily: "sans-serif" }}>Tidak ada skala yang cukup untuk menggambarkannya</p>
-            {[
-              { label: "Sayang", value: 100, color: "#FF4D6D" },
-              { label: "Bangga padamu", value: 98, color: "#F4A261" },
-              { label: "Kepercayaan", value: 100, color: "#C9184A" },
-              { label: "Kesetiaan", value: 99, color: "#A8325A" },
-            ].map((item, i) => (
-              <Section key={i} delay={i * 0.1}>
-                <div style={{ marginBottom: "1.5rem", textAlign: "left" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                    <span style={{ fontFamily: "sans-serif", fontWeight: 500 }}>{item.label}</span>
-                    <span style={{ fontFamily: "sans-serif", color: "var(--text-muted)", fontSize: "0.9rem" }}>{item.value}%</span>
-                  </div>
-                  <div style={{ height: 10, background: "rgba(255,77,109,0.1)", borderRadius: 50, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${item.value}%`, background: item.color, borderRadius: 50, transition: "width 1.5s ease" }} />
-                  </div>
-                </div>
-              </Section>
-            ))}
+          ))}
+          <div className={`choice-card ${useCustom ? "selected" : ""}`} onClick={() => setUseCustom(true)}>
+            <div style={{ fontSize: "0.95rem", color: "var(--text-muted)" }}>Tulis sendiri...</div>
           </div>
-        </Section>
-      </section>
+        </div>
 
-      {/* FOOTER */}
-      <footer style={{ padding: "4rem 2rem 3rem", textAlign: "center" }}>
-        <Section>
-          <span className="heartbeat" style={{ display: "inline-block", fontSize: "3rem" }}>💖</span>
-          <p style={{ fontSize: "1.1rem", color: "var(--text)", fontStyle: "italic", marginTop: "1rem", marginBottom: "0.25rem" }}>
-            &ldquo;Cinta sejati bukan tentang kesempurnaan,
-          </p>
-          <p style={{ fontSize: "1.1rem", color: "var(--text)", fontStyle: "italic", marginBottom: "2rem" }}>
-            tapi tentang memilih satu sama lain setiap harinya.&rdquo;
-          </p>
-          <p style={{ fontFamily: "sans-serif", fontSize: "0.85rem", color: "var(--text-muted)" }}>
-            Dibuat dengan 💕 khusus untukmu
-          </p>
-        </Section>
-      </footer>
-    </main>
+        {useCustom && (
+          <div style={{ marginTop: "1rem", animation: "fadeIn 0.3s ease" }}>
+            <input
+              type="text"
+              placeholder="Ceritakan momenmu"
+              value={custom}
+              autoFocus
+              onChange={(e) => {
+                setCustom(e.target.value);
+                setAnswers({ ...answers, memory: e.target.value });
+              }}
+              onKeyDown={(e) => e.key === "Enter" && custom.trim() && onNext()}
+            />
+            <button className="btn-primary" onClick={onNext} disabled={!custom.trim()} style={{ marginTop: "1rem", opacity: custom.trim() ? 1 : 0.4 }}>
+              Lanjut &rarr;
+            </button>
+          </div>
+        )}
+      </div>
+    </PageShell>
   );
+}
+
+// Page 4 — Love language
+function PageLoveLanguage({ onNext, answers, setAnswers }: { onNext: () => void; answers: Answers; setAnswers: (a: Answers) => void }) {
+  return (
+    <PageShell step={4} total={7}>
+      <div>
+        <p className="eyebrow stagger-1">Bahasa cinta</p>
+        <h2 className="display stagger-2" style={{ marginTop: "1rem", fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>
+          Bagaimana cara terbaik kamu merasa dicintai?
+        </h2>
+        <div className="stagger-3" style={{ display: "grid", gap: "0.75rem", marginTop: "2rem" }}>
+          {LOVE_LANGUAGES.map((ll) => (
+            <div
+              key={ll.id}
+              className={`choice-card ${answers.loveLanguage === ll.id ? "selected" : ""}`}
+              onClick={() => {
+                setAnswers({ ...answers, loveLanguage: ll.id });
+                setTimeout(onNext, 300);
+              }}
+            >
+              <div style={{ fontWeight: 400, fontSize: "0.95rem" }}>{ll.label}</div>
+              <div className="body-text" style={{ marginTop: "0.2rem", fontSize: "0.82rem" }}>
+                {ll.desc}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </PageShell>
+  );
+}
+
+// Page 5 — Dream date
+function PageDreamDate({ onNext, answers, setAnswers }: { onNext: () => void; answers: Answers; setAnswers: (a: Answers) => void }) {
+  return (
+    <PageShell step={5} total={7}>
+      <div>
+        <p className="eyebrow stagger-1">Impian</p>
+        <h2 className="display stagger-2" style={{ marginTop: "1rem", fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>
+          Kencan seperti apa yang paling kamu inginkan?
+        </h2>
+        <div className="stagger-3" style={{ display: "grid", gap: "0.75rem", marginTop: "2rem" }}>
+          {DREAM_DATES.map((d) => (
+            <div
+              key={d.id}
+              className={`choice-card ${answers.dreamDate === d.id ? "selected" : ""}`}
+              onClick={() => {
+                setAnswers({ ...answers, dreamDate: d.id });
+                setTimeout(onNext, 300);
+              }}
+            >
+              <div style={{ fontWeight: 400, fontSize: "0.95rem" }}>{d.label}</div>
+              <div className="body-text" style={{ marginTop: "0.2rem", fontSize: "0.82rem" }}>
+                {d.desc}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </PageShell>
+  );
+}
+
+// Page 6 — Personal message
+function PageMessage({ onNext, answers, setAnswers }: { onNext: () => void; answers: Answers; setAnswers: (a: Answers) => void }) {
+  return (
+    <PageShell step={6} total={7}>
+      <div>
+        <p className="eyebrow stagger-1">Satu hal terakhir</p>
+        <h2 className="display stagger-2" style={{ marginTop: "1rem", fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>
+          Ada yang ingin kamu tambahkan?
+        </h2>
+        <p className="body-text stagger-3" style={{ marginTop: "1rem" }}>
+          Sesuatu yang belum pernah kamu ucapkan, atau ingin kamu ulangi. Boleh dikosongkan.
+        </p>
+        <div className="stagger-4" style={{ marginTop: "2rem" }}>
+          <textarea rows={4} placeholder="Tulis di sini, atau biarkan kosong..." value={answers.message} onChange={(e) => setAnswers({ ...answers, message: e.target.value })} style={{ resize: "none" }} />
+        </div>
+        <div className="stagger-5" style={{ marginTop: "1.5rem" }}>
+          <button className="btn-primary" onClick={onNext}>
+            Lihat hasilnya &rarr;
+          </button>
+        </div>
+      </div>
+    </PageShell>
+  );
+}
+
+// Page 7 — Result
+function PageResult({ answers, onRestart }: { answers: Answers; onRestart: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const letter = generateLetter(answers);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(letter).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <PageShell step={7} total={7}>
+      <div>
+        <p className="eyebrow stagger-1">Untukmu</p>
+        <h2 className="display stagger-2" style={{ marginTop: "1rem", fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>
+          Pesan yang dibuat khusus
+        </h2>
+
+        <div
+          className="stagger-3"
+          style={{
+            marginTop: "2rem",
+            background: "white",
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+            padding: "1.75rem",
+            maxHeight: "45vh",
+            overflowY: "auto",
+          }}
+        >
+          <pre
+            style={{
+              fontFamily: "Georgia, serif",
+              fontSize: "0.9rem",
+              lineHeight: 1.85,
+              color: "var(--text)",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+            }}
+          >
+            {letter}
+          </pre>
+        </div>
+
+        <div className="stagger-4" style={{ display: "flex", gap: "0.75rem", marginTop: "1.5rem", flexWrap: "wrap" }}>
+          <button className="btn-primary" onClick={handleCopy}>
+            {copied ? "Tersalin" : "Salin pesan"}
+          </button>
+          <button className="btn-outline" onClick={onRestart}>
+            Mulai ulang
+          </button>
+        </div>
+
+        <p className="body-text stagger-5" style={{ marginTop: "1.25rem", fontSize: "0.82rem" }}>
+          Dibuat berdasarkan jawabanmu. Tidak ada yang disimpan.
+        </p>
+      </div>
+    </PageShell>
+  );
+}
+
+// ─── Main ────────────────────────────────────────────────────────────────────
+
+const INITIAL_ANSWERS: Answers = {
+  partnerName: "",
+  mood: "",
+  memory: "",
+  loveLanguage: "",
+  dreamDate: "",
+  message: "",
+};
+
+export default function Home() {
+  const [step, setStep] = useState(0);
+  const [key, setKey] = useState(0);
+  const [answers, setAnswers] = useState<Answers>(INITIAL_ANSWERS);
+
+  const goNext = () => {
+    setKey((k) => k + 1);
+    setStep((s) => s + 1);
+  };
+
+  const restart = () => {
+    setAnswers(INITIAL_ANSWERS);
+    setKey((k) => k + 1);
+    setStep(0);
+  };
+
+  const pages = [
+    <PageIntro key="intro" onNext={goNext} />,
+    <PageName key="name" onNext={goNext} answers={answers} setAnswers={setAnswers} />,
+    <PageMood key="mood" onNext={goNext} answers={answers} setAnswers={setAnswers} />,
+    <PageMemory key="memory" onNext={goNext} answers={answers} setAnswers={setAnswers} />,
+    <PageLoveLanguage key="ll" onNext={goNext} answers={answers} setAnswers={setAnswers} />,
+    <PageDreamDate key="date" onNext={goNext} answers={answers} setAnswers={setAnswers} />,
+    <PageMessage key="msg" onNext={goNext} answers={answers} setAnswers={setAnswers} />,
+    <PageResult key="result" answers={answers} onRestart={restart} />,
+  ];
+
+  return <div key={key}>{pages[step]}</div>;
 }
