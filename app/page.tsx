@@ -76,15 +76,58 @@ Terima kasih sudah ada, Carmen.
 — Selalu untukmu`;
 }
 
-function PageShell({ children, step, total }: { children: React.ReactNode; step: number; total: number }) {
+// ─── PageShell ──────────────────────────────────────────────────────────────
+
+function PageShell({ children, step, total, onBack }: { children: React.ReactNode; step: number; total: number; onBack?: () => void }) {
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+      {/* Progress bar */}
       <div className="progress-bar">
         <div className="progress-fill" style={{ width: `${(step / total) * 100}%` }} />
       </div>
-      <div className="page-enter" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem", overflowY: "auto" }}>
+
+      {/* Back button */}
+      {onBack && (
+        <div style={{ padding: "1.25rem 2rem 0" }}>
+          <button
+            onClick={onBack}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--text-muted)",
+              fontFamily: "Helvetica Neue, Arial, sans-serif",
+              fontSize: "0.85rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.4rem",
+              padding: 0,
+              transition: "color 0.15s",
+            }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--text)")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--text-muted)")}
+          >
+            &larr; Kembali
+          </button>
+        </div>
+      )}
+
+      {/* Content */}
+      <div
+        className="page-enter"
+        style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "2rem",
+          overflowY: "auto",
+        }}
+      >
         <div style={{ maxWidth: 560, width: "100%" }}>{children}</div>
       </div>
+
+      {/* Step counter */}
       <div style={{ padding: "1rem 2rem", textAlign: "right" }}>
         <span className="eyebrow">
           {step} / {total}
@@ -93,6 +136,8 @@ function PageShell({ children, step, total }: { children: React.ReactNode; step:
     </div>
   );
 }
+
+// ─── Pages ──────────────────────────────────────────────────────────────────
 
 function PageIntro({ onNext }: { onNext: () => void }) {
   return (
@@ -119,9 +164,9 @@ function PageIntro({ onNext }: { onNext: () => void }) {
   );
 }
 
-function PageMood({ onNext, answers, setAnswers }: { onNext: () => void; answers: Answers; setAnswers: (a: Answers) => void }) {
+function PageMood({ onNext, onBack, answers, setAnswers }: { onNext: () => void; onBack: () => void; answers: Answers; setAnswers: (a: Answers) => void }) {
   return (
-    <PageShell step={1} total={6}>
+    <PageShell step={1} total={6} onBack={onBack}>
       <div>
         <p className="eyebrow stagger-1">Hari ini</p>
         <h2 className="display stagger-2" style={{ marginTop: "1rem", fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>
@@ -151,12 +196,12 @@ function PageMood({ onNext, answers, setAnswers }: { onNext: () => void; answers
   );
 }
 
-function PageMemory({ onNext, answers, setAnswers }: { onNext: () => void; answers: Answers; setAnswers: (a: Answers) => void }) {
-  const [custom, setCustom] = useState("");
-  const [useCustom, setUseCustom] = useState(false);
+function PageMemory({ onNext, onBack, answers, setAnswers }: { onNext: () => void; onBack: () => void; answers: Answers; setAnswers: (a: Answers) => void }) {
+  const [custom, setCustom] = useState(MEMORIES.includes(answers.memory) ? "" : answers.memory);
+  const [useCustom, setUseCustom] = useState(!!answers.memory && !MEMORIES.includes(answers.memory));
 
   return (
-    <PageShell step={2} total={6}>
+    <PageShell step={2} total={6} onBack={onBack}>
       <div>
         <p className="eyebrow stagger-1">Kenangan</p>
         <h2 className="display stagger-2" style={{ marginTop: "1rem", fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>
@@ -205,9 +250,9 @@ function PageMemory({ onNext, answers, setAnswers }: { onNext: () => void; answe
   );
 }
 
-function PageLoveLanguage({ onNext, answers, setAnswers }: { onNext: () => void; answers: Answers; setAnswers: (a: Answers) => void }) {
+function PageLoveLanguage({ onNext, onBack, answers, setAnswers }: { onNext: () => void; onBack: () => void; answers: Answers; setAnswers: (a: Answers) => void }) {
   return (
-    <PageShell step={3} total={6}>
+    <PageShell step={3} total={6} onBack={onBack}>
       <div>
         <p className="eyebrow stagger-1">Bahasa cinta</p>
         <h2 className="display stagger-2" style={{ marginTop: "1rem", fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>
@@ -237,9 +282,9 @@ function PageLoveLanguage({ onNext, answers, setAnswers }: { onNext: () => void;
   );
 }
 
-function PageDreamDate({ onNext, answers, setAnswers }: { onNext: () => void; answers: Answers; setAnswers: (a: Answers) => void }) {
+function PageDreamDate({ onNext, onBack, answers, setAnswers }: { onNext: () => void; onBack: () => void; answers: Answers; setAnswers: (a: Answers) => void }) {
   return (
-    <PageShell step={4} total={6}>
+    <PageShell step={4} total={6} onBack={onBack}>
       <div>
         <p className="eyebrow stagger-1">Impian</p>
         <h2 className="display stagger-2" style={{ marginTop: "1rem", fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>
@@ -269,9 +314,9 @@ function PageDreamDate({ onNext, answers, setAnswers }: { onNext: () => void; an
   );
 }
 
-function PageMessage({ onNext, answers, setAnswers }: { onNext: () => void; answers: Answers; setAnswers: (a: Answers) => void }) {
+function PageMessage({ onNext, onBack, answers, setAnswers }: { onNext: () => void; onBack: () => void; answers: Answers; setAnswers: (a: Answers) => void }) {
   return (
-    <PageShell step={5} total={6}>
+    <PageShell step={5} total={6} onBack={onBack}>
       <div>
         <p className="eyebrow stagger-1">Satu hal terakhir</p>
         <h2 className="display stagger-2" style={{ marginTop: "1rem", fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>
@@ -297,7 +342,7 @@ function PageMessage({ onNext, answers, setAnswers }: { onNext: () => void; answ
   );
 }
 
-function PageResult({ answers, onRestart }: { answers: Answers; onRestart: () => void }) {
+function PageResult({ answers, onBack, onRestart }: { answers: Answers; onBack: () => void; onRestart: () => void }) {
   const [copied, setCopied] = useState(false);
   const letter = generateLetter(answers);
 
@@ -309,13 +354,24 @@ function PageResult({ answers, onRestart }: { answers: Answers; onRestart: () =>
   };
 
   return (
-    <PageShell step={6} total={6}>
+    <PageShell step={6} total={6} onBack={onBack}>
       <div>
         <p className="eyebrow stagger-1">Untuk Carmen</p>
         <h2 className="display stagger-2" style={{ marginTop: "1rem", fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>
           Ini untukmu
         </h2>
-        <div className="stagger-3" style={{ marginTop: "2rem", background: "white", border: "1px solid var(--border)", borderRadius: 8, padding: "1.75rem", maxHeight: "45vh", overflowY: "auto" }}>
+        <div
+          className="stagger-3"
+          style={{
+            marginTop: "2rem",
+            background: "white",
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+            padding: "1.75rem",
+            maxHeight: "45vh",
+            overflowY: "auto",
+          }}
+        >
           <pre style={{ fontFamily: "Georgia, serif", fontSize: "0.9rem", lineHeight: 1.9, color: "var(--text)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{letter}</pre>
         </div>
         <div className="stagger-4" style={{ display: "flex", gap: "0.75rem", marginTop: "1.5rem", flexWrap: "wrap" }}>
@@ -334,6 +390,8 @@ function PageResult({ answers, onRestart }: { answers: Answers; onRestart: () =>
   );
 }
 
+// ─── Main ────────────────────────────────────────────────────────────────────
+
 const INITIAL_ANSWERS: Answers = { mood: "", memory: "", loveLanguage: "", dreamDate: "", message: "" };
 
 export default function Home() {
@@ -345,6 +403,10 @@ export default function Home() {
     setKey((k) => k + 1);
     setStep((s) => s + 1);
   };
+  const goBack = () => {
+    setKey((k) => k + 1);
+    setStep((s) => s - 1);
+  };
   const restart = () => {
     setAnswers(INITIAL_ANSWERS);
     setKey((k) => k + 1);
@@ -353,12 +415,12 @@ export default function Home() {
 
   const pages = [
     <PageIntro key="intro" onNext={goNext} />,
-    <PageMood key="mood" onNext={goNext} answers={answers} setAnswers={setAnswers} />,
-    <PageMemory key="memory" onNext={goNext} answers={answers} setAnswers={setAnswers} />,
-    <PageLoveLanguage key="ll" onNext={goNext} answers={answers} setAnswers={setAnswers} />,
-    <PageDreamDate key="date" onNext={goNext} answers={answers} setAnswers={setAnswers} />,
-    <PageMessage key="msg" onNext={goNext} answers={answers} setAnswers={setAnswers} />,
-    <PageResult key="result" answers={answers} onRestart={restart} />,
+    <PageMood key="mood" onNext={goNext} onBack={goBack} answers={answers} setAnswers={setAnswers} />,
+    <PageMemory key="memory" onNext={goNext} onBack={goBack} answers={answers} setAnswers={setAnswers} />,
+    <PageLoveLanguage key="ll" onNext={goNext} onBack={goBack} answers={answers} setAnswers={setAnswers} />,
+    <PageDreamDate key="date" onNext={goNext} onBack={goBack} answers={answers} setAnswers={setAnswers} />,
+    <PageMessage key="msg" onNext={goNext} onBack={goBack} answers={answers} setAnswers={setAnswers} />,
+    <PageResult key="result" answers={answers} onBack={goBack} onRestart={restart} />,
   ];
 
   return <div key={key}>{pages[step]}</div>;
