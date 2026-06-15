@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 type Answers = {
   mood: string;
@@ -344,6 +344,8 @@ function PageMessage({ onNext, onBack, answers, setAnswers }: { onNext: () => vo
 
 function PageResult({ answers, onBack, onRestart }: { answers: Answers; onBack: () => void; onRestart: () => void }) {
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const letter = generateLetter(answers);
 
   const handleCopy = () => {
@@ -353,6 +355,128 @@ function PageResult({ answers, onBack, onRestart }: { answers: Answers; onBack: 
     });
   };
 
+  const handleDownload = () => {
+    setDownloading(true);
+    try {
+      const W = 720;
+      const PADDING = 56;
+      const TEXT_WIDTH = W - PADDING * 2;
+      const FONT_SIZE = 15;
+      const LINE_HEIGHT = FONT_SIZE * 1.9;
+      const CORNER = 28;
+      const BG = "#FDFAF7";
+      const TEXT_COLOR = "#2A1F18";
+      const MUTED = "#9B8878";
+      const ACCENT = "#C4A882";
+      const BORDER = "#E8E0D8";
+
+      // Ukur tinggi dulu dengan canvas sementara
+      const tmp = document.createElement("canvas");
+      const ctx2 = tmp.getContext("2d")!;
+      ctx2.font = `${FONT_SIZE}px Georgia, serif`;
+
+      const lines: string[] = [];
+      letter.split("\n").forEach((paragraph) => {
+        if (paragraph.trim() === "") {
+          lines.push("");
+          return;
+        }
+        const words = paragraph.split(" ");
+        let cur = "";
+        words.forEach((w) => {
+          const test = cur ? cur + " " + w : w;
+          if (ctx2.measureText(test).width > TEXT_WIDTH) {
+            lines.push(cur);
+            cur = w;
+          } else cur = test;
+        });
+        if (cur) lines.push(cur);
+      });
+
+      const DATE_H = 40;
+      const TOP_LINE_H = 28;
+      const contentH = lines.length * LINE_HEIGHT;
+      const H = PADDING + TOP_LINE_H + contentH + DATE_H + PADDING;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = W * 2;
+      canvas.height = H * 2;
+      const ctx = canvas.getContext("2d")!;
+      ctx.scale(2, 2);
+
+      // Background
+      ctx.fillStyle = BG;
+      ctx.beginPath();
+      ctx.roundRect(0, 0, W, H, 12);
+      ctx.fill();
+
+      // Border
+      ctx.strokeStyle = BORDER;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(0.5, 0.5, W - 1, H - 1, 12);
+      ctx.stroke();
+
+      // Ornamen sudut
+      const drawCorner = (x: number, y: number, dx: number, dy: number) => {
+        ctx.strokeStyle = ACCENT;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x + dx * CORNER, y);
+        ctx.lineTo(x, y);
+        ctx.lineTo(x, y + dy * CORNER);
+        ctx.stroke();
+      };
+      drawCorner(14, 14, 1, 1);
+      drawCorner(W - 14, 14, -1, 1);
+      drawCorner(14, H - 14, 1, -1);
+      drawCorner(W - 14, H - 14, -1, -1);
+
+      // Garis atas
+      const lineY = PADDING;
+      ctx.strokeStyle = BORDER;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(PADDING, lineY);
+      ctx.lineTo(W - PADDING, lineY);
+      ctx.stroke();
+
+      // Teks surat
+      ctx.fillStyle = TEXT_COLOR;
+      ctx.font = `${FONT_SIZE}px Georgia, serif`;
+      ctx.textBaseline = "top";
+      let y = PADDING + TOP_LINE_H;
+      lines.forEach((line) => {
+        if (line !== "") ctx.fillText(line, PADDING, y);
+        y += LINE_HEIGHT;
+      });
+
+      // Garis bawah
+      const bottomLineY = PADDING + TOP_LINE_H + contentH + 12;
+      ctx.strokeStyle = BORDER;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(PADDING, bottomLineY);
+      ctx.lineTo(W - PADDING, bottomLineY);
+      ctx.stroke();
+
+      // Tanggal
+      const dateStr = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+      ctx.fillStyle = MUTED;
+      ctx.font = "11px Helvetica Neue, Arial, sans-serif";
+      const dateW = ctx.measureText(dateStr).width;
+      ctx.fillText(dateStr, W - PADDING - dateW, bottomLineY + 12);
+
+      // Download
+      const link = document.createElement("a");
+      link.download = "untuk-carmen.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <PageShell step={6} total={6} onBack={onBack}>
       <div>
@@ -360,30 +484,66 @@ function PageResult({ answers, onBack, onRestart }: { answers: Answers; onBack: 
         <h2 className="display stagger-2" style={{ marginTop: "1rem", fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>
           Ini untukmu
         </h2>
+
+        {/* Card — ini yang akan di-screenshot */}
         <div
+          ref={cardRef}
           className="stagger-3"
           style={{
             marginTop: "2rem",
-            background: "white",
-            border: "1px solid var(--border)",
-            borderRadius: 8,
-            padding: "1.75rem",
-            maxHeight: "45vh",
-            overflowY: "auto",
+            background: "#FDFAF7",
+            border: "1px solid #E8E0D8",
+            borderRadius: 12,
+            padding: "2.5rem 2rem",
+            position: "relative",
+            overflow: "hidden",
           }}
         >
-          <pre style={{ fontFamily: "Georgia, serif", fontSize: "0.9rem", lineHeight: 1.9, color: "var(--text)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{letter}</pre>
+          {/* Ornamen sudut */}
+          <div style={{ position: "absolute", top: 16, left: 16, width: 32, height: 32, borderTop: "1.5px solid #C4A882", borderLeft: "1.5px solid #C4A882", borderRadius: "2px 0 0 0" }} />
+          <div style={{ position: "absolute", top: 16, right: 16, width: 32, height: 32, borderTop: "1.5px solid #C4A882", borderRight: "1.5px solid #C4A882", borderRadius: "0 2px 0 0" }} />
+          <div style={{ position: "absolute", bottom: 16, left: 16, width: 32, height: 32, borderBottom: "1.5px solid #C4A882", borderLeft: "1.5px solid #C4A882", borderRadius: "0 0 0 2px" }} />
+          <div style={{ position: "absolute", bottom: 16, right: 16, width: 32, height: 32, borderBottom: "1.5px solid #C4A882", borderRight: "1.5px solid #C4A882", borderRadius: "0 0 2px 0" }} />
+
+          {/* Garis atas tipis */}
+          <div style={{ borderTop: "1px solid #E8E0D8", marginBottom: "1.5rem", paddingTop: "0" }} />
+
+          <pre
+            style={{
+              fontFamily: "Georgia, serif",
+              fontSize: "0.875rem",
+              lineHeight: 2,
+              color: "#2A1F18",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              maxHeight: "42vh",
+              overflowY: "auto",
+            }}
+          >
+            {letter}
+          </pre>
+
+          {/* Garis bawah + tanggal */}
+          <div style={{ borderTop: "1px solid #E8E0D8", marginTop: "1.5rem", paddingTop: "1rem", display: "flex", justifyContent: "flex-end" }}>
+            <span style={{ fontFamily: "Helvetica Neue, Arial, sans-serif", fontSize: "0.72rem", color: "#9B8878", letterSpacing: "0.06em" }}>
+              {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+            </span>
+          </div>
         </div>
+
         <div className="stagger-4" style={{ display: "flex", gap: "0.75rem", marginTop: "1.5rem", flexWrap: "wrap" }}>
-          <button className="btn-primary" onClick={handleCopy}>
-            {copied ? "Tersalin" : "Salin pesan"}
+          <button className="btn-primary" onClick={handleDownload} disabled={downloading}>
+            {downloading ? "Menyimpan..." : "Simpan sebagai gambar"}
+          </button>
+          <button className="btn-outline" onClick={handleCopy}>
+            {copied ? "Tersalin" : "Salin teks"}
           </button>
           <button className="btn-outline" onClick={onRestart}>
             Mulai ulang
           </button>
         </div>
         <p className="body-text stagger-5" style={{ marginTop: "1.25rem", fontSize: "0.82rem" }}>
-          Dibuat dari jawabanmu. Tidak ada yang disimpan.
+          Gambar disimpan langsung di perangkatmu. Tidak ada yang dikirim ke server.
         </p>
       </div>
     </PageShell>
