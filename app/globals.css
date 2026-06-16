@@ -233,3 +233,15 @@ textarea:focus {
     font-size: 1.9rem;
   }
 }
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.typing-cursor {
+  display: inline-block;
+  animation: blink 1s infinite;
+  color: var(--rose);
+}

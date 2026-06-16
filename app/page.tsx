@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 type Answers = {
   mood: string;
@@ -347,6 +347,26 @@ function PageResult({ answers, onBack, onRestart }: { answers: Answers; onBack: 
   const [downloading, setDownloading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const letter = generateLetter(answers);
+  const [typedLetter, setTypedLetter] = useState("");
+
+  useEffect(() => {
+    let index = 0;
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTypedLetter("");
+
+    const timer = setInterval(() => {
+      index++;
+
+      setTypedLetter(letter.slice(0, index));
+
+      if (index >= letter.length) {
+        clearInterval(timer);
+      }
+    }, 18); // semakin kecil semakin cepat
+
+    return () => clearInterval(timer);
+  }, [letter]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(letter).then(() => {
@@ -520,7 +540,8 @@ function PageResult({ answers, onBack, onRestart }: { answers: Answers; onBack: 
               overflowY: "auto",
             }}
           >
-            {letter}
+            {typedLetter}
+            {typedLetter.length < letter.length && <span className="typing-cursor">|</span>}
           </pre>
 
           {/* Garis bawah + tanggal */}
