@@ -348,6 +348,44 @@ function PageResult({ answers, onBack, onRestart }: { answers: Answers; onBack: 
   const cardRef = useRef<HTMLDivElement>(null);
   const letter = generateLetter(answers);
   const [typedLetter, setTypedLetter] = useState("");
+  const [opened, setOpened] = useState(false);
+  const [showLetter, setShowLetter] = useState(false);
+
+  const handleOpenEnvelope = () => {
+    setOpened(true);
+
+    setTimeout(() => {
+      setShowLetter(true);
+    }, 1800);
+  };
+
+  function Envelope({ opened, onOpen }: { opened: boolean; onOpen: () => void }) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "2rem",
+        }}
+      >
+        <p className="eyebrow">Untuk Carmen</p>
+
+        <div className={`envelope-wrapper ${opened ? "opened" : ""}`} onClick={!opened ? onOpen : undefined}>
+          <div className="letter-preview">
+            <span>♡</span>
+          </div>
+
+          <div className="envelope">
+            <div className="envelope-flap" />
+            <div className="envelope-body" />
+          </div>
+        </div>
+
+        <p className="body-text">{!opened ? "Klik amplop untuk membuka surat" : "Membuka surat..."}</p>
+      </div>
+    );
+  }
 
   useEffect(() => {
     let index = 0;
@@ -497,6 +535,14 @@ function PageResult({ answers, onBack, onRestart }: { answers: Answers; onBack: 
     }
   };
 
+  if (!showLetter) {
+    return (
+      <PageShell step={6} total={6} onBack={onBack}>
+        <Envelope opened={opened} onOpen={handleOpenEnvelope} />
+      </PageShell>
+    );
+  }
+
   return (
     <PageShell step={6} total={6} onBack={onBack}>
       <div>
@@ -508,7 +554,7 @@ function PageResult({ answers, onBack, onRestart }: { answers: Answers; onBack: 
         {/* Card — ini yang akan di-screenshot */}
         <div
           ref={cardRef}
-          className="stagger-3"
+          className="stagger-3 result-card-reveal"
           style={{
             marginTop: "2rem",
             background: "#FDFAF7",
