@@ -260,9 +260,7 @@ textarea:focus {
   bottom: 0;
   left: 0;
 
-  filter: drop-shadow(
-    0 20px 40px rgba(0, 0, 0, 0.08)
-  );
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.08));
 }
 
 .envelope-body {
@@ -280,23 +278,16 @@ textarea:focus {
 
   background: var(--bg-2);
 
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    50% 58%
-  );
+  clip-path: polygon(0 0, 100% 0, 50% 58%);
 
   border: 1px solid var(--border);
 
   transform-origin: top center;
 
-  transition:
-    transform 1s cubic-bezier(
-      0.22,
-      1,
-      0.36,
-      1
-    );
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+
+  transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1);
 
   z-index: 10;
 }
@@ -313,7 +304,6 @@ textarea:focus {
   height: 145px;
 
   background: #fffdf8;
-
   border: 1px solid #e8e0d8;
   border-radius: 8px;
 
@@ -323,18 +313,13 @@ textarea:focus {
 
   font-size: 1.8rem;
 
-  box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.08);
-
-  transition:
-    transform 1.3s cubic-bezier(
-      0.22,
-      1,
-      0.36,
-      1
-    );
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
 
   z-index: 1;
+
+  transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+
+  transition-delay: 0.45s;
 }
 
 .envelope-wrapper.opened .envelope-flap {
@@ -342,9 +327,16 @@ textarea:focus {
 }
 
 .envelope-wrapper.opened .letter-preview {
-  transform:
-    translateX(-50%)
-    translateY(-120px);
+  transform: translateX(-50%) translateY(-155px) scale(1.02);
+}
+
+.envelope-wrapper {
+  position: relative;
+  width: 280px;
+  height: 220px;
+  cursor: pointer;
+
+  perspective: 1200px;
 }
 
 @keyframes revealLetter {
@@ -360,6 +352,5 @@ textarea:focus {
 }
 
 .result-card-reveal {
-  animation:
-    revealLetter 0.8s ease forwards;
+  animation: revealLetter 0.8s ease forwards;
 }

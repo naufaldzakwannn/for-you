@@ -63,7 +63,7 @@ function generateLetter(answers: Answers): string {
 
 ${moodMap[answers.mood] || "kamu selalu ada di pikiranku, tanpa terkecuali"}.
 
-Di antara semua momen yang kita lewati, yang paling sering aku kenang adalah — ${answers.memory.toLowerCase()}. Bukan karena dramatis atau luar biasa, tapi karena bersamamu, hal yang sederhana pun terasa membekas.
+Di antara semua momen yang kita lewati, yang paling sering aku kenang adalah — ${(answers.memory || "setiap momen bersamamu").toLowerCase()}. Bukan karena dramatis atau luar biasa, tapi karena bersamamu, hal yang sederhana pun terasa membekas.
 
 ${llMap[answers.loveLanguage] || "cinta bisa hadir dalam banyak bentuk, dan aku ingin menunjukkannya dengan cara yang paling berarti bagimu"}.
 
@@ -345,13 +345,16 @@ function PageMessage({ onNext, onBack, answers, setAnswers }: { onNext: () => vo
 function PageResult({ answers, onBack, onRestart }: { answers: Answers; onBack: () => void; onRestart: () => void }) {
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
   const letter = generateLetter(answers);
   const [typedLetter, setTypedLetter] = useState("");
   const [opened, setOpened] = useState(false);
   const [showLetter, setShowLetter] = useState(false);
+  const [typingFinished, setTypingFinished] = useState(false);
+  const textRef = useRef<HTMLPreElement>(null);
 
   const handleOpenEnvelope = () => {
+    if (opened) return;
+
     setOpened(true);
 
     setTimeout(() => {
@@ -388,29 +391,67 @@ function PageResult({ answers, onBack, onRestart }: { answers: Answers; onBack: 
   }
 
   useEffect(() => {
+    if (!showLetter) return;
+
     let index = 0;
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTypedLetter("");
+    setTypingFinished(false);
 
     const timer = setInterval(() => {
       index++;
 
-      setTypedLetter(letter.slice(0, index));
+      const nextText = letter.slice(0, index);
+
+      setTypedLetter(nextText);
+
+      requestAnimationFrame(() => {
+        if (textRef.current) {
+          textRef.current.scrollTop = textRef.current.scrollHeight;
+        }
+      });
 
       if (index >= letter.length) {
         clearInterval(timer);
+        setTypingFinished(true);
       }
-    }, 18); // semakin kecil semakin cepat
+    }, 18);
 
     return () => clearInterval(timer);
-  }, [letter]);
+  }, [showLetter, letter]);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(letter).then(() => {
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(letter);
+
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    } catch (error) {
+      console.error(error);
+      alert("Clipboard tidak tersedia.");
+    }
+  };
+
+  const drawRoundedRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
+    if ("roundRect" in ctx) {
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, r);
+      return;
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
   };
 
   const handleDownload = () => {
@@ -464,15 +505,13 @@ function PageResult({ answers, onBack, onRestart }: { answers: Answers; onBack: 
 
       // Background
       ctx.fillStyle = BG;
-      ctx.beginPath();
-      ctx.roundRect(0, 0, W, H, 12);
+      drawRoundedRect(ctx, 0, 0, W, H, 12);
       ctx.fill();
 
       // Border
       ctx.strokeStyle = BORDER;
       ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.roundRect(0.5, 0.5, W - 1, H - 1, 12);
+      drawRoundedRect(ctx, 0.5, 0.5, W - 1, H - 1, 12);
       ctx.stroke();
 
       // Ornamen sudut
@@ -537,7 +576,7 @@ function PageResult({ answers, onBack, onRestart }: { answers: Answers; onBack: 
 
   if (!showLetter) {
     return (
-      <PageShell step={6} total={6} onBack={onBack}>
+      <PageShell step={7} total={7} onBack={onBack}>
         <Envelope opened={opened} onOpen={handleOpenEnvelope} />
       </PageShell>
     );
@@ -553,7 +592,6 @@ function PageResult({ answers, onBack, onRestart }: { answers: Answers; onBack: 
 
         {/* Card — ini yang akan di-screenshot */}
         <div
-          ref={cardRef}
           className="stagger-3 result-card-reveal"
           style={{
             marginTop: "2rem",
@@ -575,6 +613,7 @@ function PageResult({ answers, onBack, onRestart }: { answers: Answers; onBack: 
           <div style={{ borderTop: "1px solid #E8E0D8", marginBottom: "1.5rem", paddingTop: "0" }} />
 
           <pre
+            ref={textRef}
             style={{
               fontFamily: "Georgia, serif",
               fontSize: "0.875rem",
@@ -597,18 +636,19 @@ function PageResult({ answers, onBack, onRestart }: { answers: Answers; onBack: 
             </span>
           </div>
         </div>
-
-        <div className="stagger-4" style={{ display: "flex", gap: "0.75rem", marginTop: "1.5rem", flexWrap: "wrap" }}>
-          <button className="btn-primary" onClick={handleDownload} disabled={downloading}>
-            {downloading ? "Menyimpan..." : "Simpan sebagai gambar"}
-          </button>
-          <button className="btn-outline" onClick={handleCopy}>
-            {copied ? "Tersalin" : "Salin teks"}
-          </button>
-          <button className="btn-outline" onClick={onRestart}>
-            Mulai ulang
-          </button>
-        </div>
+        {typingFinished && (
+          <div className="stagger-4" style={{ display: "flex", gap: "0.75rem", marginTop: "1.5rem", flexWrap: "wrap" }}>
+            <button className="btn-primary" onClick={handleDownload} disabled={downloading}>
+              {downloading ? "Menyimpan..." : "Simpan sebagai gambar"}
+            </button>
+            <button className="btn-outline" onClick={handleCopy}>
+              {copied ? "Tersalin" : "Salin teks"}
+            </button>
+            <button className="btn-outline" onClick={onRestart}>
+              Mulai ulang
+            </button>
+          </div>
+        )}
         <p className="body-text stagger-5" style={{ marginTop: "1.25rem", fontSize: "0.82rem" }}>
           Gambar disimpan langsung di perangkatmu. Tidak ada yang dikirim ke server.
         </p>
